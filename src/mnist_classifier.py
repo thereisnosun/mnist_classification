@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.svm import LinearSVC
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.externals import joblib
 DATA_PATH = '../data/'
 
@@ -38,7 +41,23 @@ def save_classifier(clf, filename):
 
 
 def load_classifier(filename):
-    return joblib.load(filename)
+    full_path = os.path.join(DATA_PATH, filename)
+    return joblib.load(full_path)
+
+
+def call_classifier(dataset, y, class_creator, class_name, use_old=True):
+    if use_old:
+        classifier = load_classifier(class_name)
+    else:
+        classifier = class_creator()
+        classifier.fit(dataset, y)
+        val_score = cross_val_score(classifier, dataset, y, cv=3, scoring="accuracy");
+        print(val_score)
+        save_classifier(classifier, class_name)
+
+    test_classifier(classifier)
+    print("Prediction file is created")
+
 
 
 def main():
@@ -49,16 +68,14 @@ def main():
     print(dataset.info())
     #plot_digit(dataset.iloc[5].values)
 
+    # call_classifier(dataset, y, lambda:  OneVsRestClassifier(LinearSVC(random_state=13)),
+    #   "one_vs_rest.pkl")
+    #
+    # call_classifier(dataset, y, lambda: OneVsOneClassifier(SGDClassifier(random_state=42)),
+    #                 "one_vs_one.pkl")
 
-    classifier = OneVsRestClassifier(LinearSVC(random_state=13))
-    classifier.fit(dataset, y)
-
-    val_score = cross_val_score(classifier, dataset, y, cv=3, scoring="accuracy");
-    print(val_score)
-
-    save_classifier(classifier, "one_vs_rest.pkl")
-    test_classifier(classifier)
-
+    call_classifier(dataset, y, lambda: RandomForestClassifier(random_state=42),
+                    "random_forest.pkl", False)
 
 if __name__ == "__main__":
     main()
