@@ -8,6 +8,9 @@ from sklearn.svm import LinearSVC
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import SGDClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.externals import joblib
 DATA_PATH = '../data/'
 
@@ -74,8 +77,14 @@ def main():
     # call_classifier(dataset, y, lambda: OneVsOneClassifier(SGDClassifier(random_state=42)),
     #                 "one_vs_one.pkl")
 
-    call_classifier(dataset, y, lambda: RandomForestClassifier(random_state=42),
+    call_classifier(dataset, y, lambda: RandomForestClassifier(random_state=13, n_estimators=100, n_jobs=-1),
                     "random_forest.pkl", False)
+    #
+    # call_classifier(dataset, y, lambda:     DecisionTreeClassifier(max_depth=5),
+    #                  "decision_tree.pkl", False)
+
+    # call_classifier(dataset, y, lambda: KNeighborsClassifier(),
+    #                 "k_neighbours.pkl", False) #this shit runs waaay too long
 
 if __name__ == "__main__":
     main()
