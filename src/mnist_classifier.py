@@ -111,19 +111,14 @@ def tf_test():
 def build_cnn():
     mnist_dataset = mnist_loader.MnistDatasetTF()
     mnist_test_dataset = mnist_loader.MnistDatasetTF(False)
-    n_epoch = 10
+    n_epoch = 3
     batch_size = 100
 
     cnn_tf= cnn_network.CNN()
-    cnn_tf.train(mnist_dataset, mnist_test_dataset, n_epoch, batch_size, "./tf_mnist_model")
+    #cnn_tf.train(mnist_dataset, mnist_test_dataset, n_epoch, batch_size, "./data/tf_mnist_model.ckpt")
+    #cnn_tf.restore("./data/tf_mnist_model.ckpt")
+    cnn_tf.predict(mnist_test_dataset)
 
-
-    # with tf.Session() as sess:
-    #     saver.restore(sess, "./data/mnist_cnn_model")
-    #     saver.build()
-    #     prediction = tf.argmax(logits, 1)
-    #     best = sess.run([prediction], feed_dict={X: mnist_test_dataset.get_images()})
-    #     print(best)
 
 
 def predict():

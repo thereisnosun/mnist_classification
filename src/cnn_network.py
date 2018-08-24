@@ -2,6 +2,8 @@ import tensorflow as tf
 import src.mnist_loader as mnist_loader
 from tensorflow.examples.tutorials.mnist import input_data
 
+import os
+
 class CNN:
     height = 28
     width = 28
@@ -44,29 +46,39 @@ class CNN:
             fc1 = tf.layers.dense(pool3_flat, self.n_fc1, activation=tf.nn.relu, name="fc1")
 
         with tf.name_scope("output"):
-            logits = tf.layers.dense(fc1, self.n_outputs, name="output")
-            Y_proba = tf.nn.softmax(logits, name="Y_proba")
+            self.logits = tf.layers.dense(fc1, self.n_outputs, name="output")
+            Y_proba = tf.nn.softmax(self.logits, name="Y_proba")
 
         with tf.name_scope("train"):
-            xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.y)
+            xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y)
             loss = tf.reduce_mean(xentropy)
             optimizer = tf.train.AdamOptimizer()
             self.training_op = optimizer.minimize(loss)
 
         with tf.name_scope("eval"):
-            correct = tf.nn.in_top_k(logits, self.y, 1)
+            correct = tf.nn.in_top_k(self.logits, self.y, 1)
             self.accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
 
         with tf.name_scope("init_and_save"):
             self.init = tf.global_variables_initializer()
             self.saver = tf.train.Saver()
 
+        with tf.name_scope("predict"):
+            self.prediction = tf.argmax(self.logits, 1)
+
+
+    def restore(self, session_path):
+        tf.reset_default_graph()
+        with tf.Session() as sess:
+            saver = tf.train.import_meta_graph(os.path.join("/home/tmoroz/dev/mnist_classification", session_path))
+            saver.restore(sess, tf.train.latest_checkpoint('./'))
+            saver.build()
 
     def train(self, mnist_loader, mnist_loader_test=None, n_epochs=10, batch_size=100, model_name="./my_mnist_model"):
         with tf.Session() as sess:
             self.init.run()
             for epoch in range(n_epochs):
-                for iteration in range(mnist_loader.size()// batch_size):
+                for iteration in range(mnist_loader.size() // batch_size):
                     X_batch, y_batch = mnist_loader.get_next_batch(batch_size)
                     sess.run(self.training_op, feed_dict={self.X: X_batch, self.y: y_batch})
                 acc_train = self.accuracy.eval(feed_dict={self.X: X_batch, self.y: y_batch})
@@ -74,4 +86,10 @@ class CNN:
                     acc_test = self.accuracy.eval(feed_dict={self.X: mnist_loader_test.get_images(), self.y: mnist_loader_test.get_labels()})
                 print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
 
-                save_path = self.saver.save(sess, model_name)
+                save_path = self.saver.save(sess, os.path.join("/home/tmoroz/dev/mnist_classification", model_name)) #tf_mnist_model.ckpt
+
+    def predict(self, mnist_loader):
+        with tf.Session() as sess:
+            self.init.run()
+            result = self.prediction.eval(feed_dict={self.X: mnist_loader.get_images()})
+            print (len(result))
