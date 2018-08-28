@@ -20,11 +20,14 @@ def load_dataset(dataset_path):
 
 class MnistDataset:
     def __init__(self, path):
-        dataset  = load_dataset(path)
-        y = dataset['label']
-        dataset.drop(['label'], axis=1, inplace=True)
+        dataset = load_dataset(path)
+        if "label" in dataset.columns:
+            y = dataset['label']
+            self.y = y.values.astype(np.int32)
+            dataset.drop(['label'], axis=1, inplace=True)
+        else:
+            self.y = []
         self.X = convert_X(dataset)
-        self.y = y.values.astype(np.int32)
         self.curr_batch = 0
 
     def get_next_batch(self, batch_size):

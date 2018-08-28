@@ -110,33 +110,22 @@ def tf_test():
 
 def build_cnn():
     mnist_dataset = mnist_loader.MnistDatasetTF()
-    mnist_test_dataset = mnist_loader.MnistDatasetTF(False)
-    n_epoch = 3
+    mnist_dataset_tf = mnist_loader.MnistDatasetTF(False)
+    # print(type(mnist_dataset.get_images()), len(mnist_dataset.get_images()))
+    # print(type(mnist_dataset_tf.get_images()), len(mnist_dataset_tf.get_images()))
+
+
+    mnist_test_dataset = mnist_loader.MnistDataset("test.csv")
+    n_epoch = 10
     batch_size = 100
 
-    cnn_tf= cnn_network.CNN()
-    #cnn_tf.train(mnist_dataset, mnist_test_dataset, n_epoch, batch_size, "./data/tf_mnist_model.ckpt")
-    #cnn_tf.restore("./data/tf_mnist_model.ckpt")
-    cnn_tf.predict(mnist_test_dataset)
+    cnn_tf = cnn_network.CNN()
+    #cnn_tf.train(mnist_dataset, None, n_epoch, batch_size, "./data/tf_mnist_model.ckpt")
+    cnn_tf.restore("data/tf_mnist_model")
+    predict_result = cnn_tf.predict(mnist_test_dataset)
 
-
-
-def predict():
-    #prediction = tf.argmax(logits, 1)
-    with tf.name_scope("restore"):
-        init = tf.global_variables_initializer()
-        model_restore = tf.train.Saver()
-
-    with tf.Session() as sess:
-        model_restore.restore("./data/mnist_cnn_model")
-        model_restore.build()
-
-    #TODO: load saved model, use for prediction
-
-# def test_model():
-#     prediction = tf.argmax(y, 1)
-#     print
-#     prediction.eval(feed_dict={x: mnist.test.images})
+    X_test_data = load_dataset('test.csv') #TODO: fix this stupid workaround
+    create_prediction_file(X_test_data, pd.Series(predict_result))
 
 
 def main():
@@ -145,7 +134,6 @@ def main():
     dataset.drop(['label'], axis=1, inplace=True)
     print(dataset.head())
     print(dataset.info())
-    #plot_digit(dataset.iloc[5].values)
     #
     # call_classifier(dataset, y, lambda:  OneVsRestClassifier(LinearSVC(random_state=13)),
     #   "one_vs_rest.pkl", False)
@@ -167,9 +155,6 @@ def main():
         voting='soft'),
                     "voting_combine.pkl", False)
 
-
-    # call_classifier(dataset, y, lambda: KNeighborsClassifier(),
-    #                 "k_neighbours.pkl", False) #this shit runs waaay too long
 
 if __name__ == "__main__":
     build_cnn()

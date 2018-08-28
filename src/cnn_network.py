@@ -64,15 +64,16 @@ class CNN:
             self.saver = tf.train.Saver()
 
         with tf.name_scope("predict"):
+            correct = tf.nn.in_top_k(self.logits, self.y, 1)
             self.prediction = tf.argmax(self.logits, 1)
 
 
     def restore(self, session_path):
         tf.reset_default_graph()
         with tf.Session() as sess:
-            saver = tf.train.import_meta_graph(os.path.join("/home/tmoroz/dev/mnist_classification", session_path))
-            saver.restore(sess, tf.train.latest_checkpoint('./'))
-            saver.build()
+            #saver = tf.train.import_meta_graph(os.path.join("/home/tmoroz/dev/mnist_classification", session_path))
+            self.saver.restore(sess, tf.train.latest_checkpoint(os.path.join("/home/tmoroz/dev/mnist_classification", session_path)))
+            self.saver.build()
 
     def train(self, mnist_loader, mnist_loader_test=None, n_epochs=10, batch_size=100, model_name="./my_mnist_model"):
         with tf.Session() as sess:
@@ -84,12 +85,16 @@ class CNN:
                 acc_train = self.accuracy.eval(feed_dict={self.X: X_batch, self.y: y_batch})
                 if mnist_loader_test:
                     acc_test = self.accuracy.eval(feed_dict={self.X: mnist_loader_test.get_images(), self.y: mnist_loader_test.get_labels()})
-                print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
+                    print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
+                else:
+                    print(epoch, "Train accuracy:", acc_train)
 
                 save_path = self.saver.save(sess, os.path.join("/home/tmoroz/dev/mnist_classification", model_name)) #tf_mnist_model.ckpt
 
     def predict(self, mnist_loader):
         with tf.Session() as sess:
             self.init.run()
-            result = self.prediction.eval(feed_dict={self.X: mnist_loader.get_images()})
-            print (len(result))
+            #result = self.prediction.eval(feed_dict={self.X: mnist_loader.get_images()})
+            result = sess.run(self.prediction, feed_dict={self.X: mnist_loader.get_images()})
+            print (len(result), type(result))
+            return result
