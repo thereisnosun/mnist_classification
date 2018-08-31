@@ -69,11 +69,12 @@ class CNN:
 
 
     def restore(self, session_path):
-        tf.reset_default_graph()
+        #tf.reset_default_graph()
         with tf.Session() as sess:
-            #saver = tf.train.import_meta_graph(os.path.join("/home/tmoroz/dev/mnist_classification", session_path))
-            self.saver.restore(sess, tf.train.latest_checkpoint(os.path.join("/home/tmoroz/dev/mnist_classification", session_path)))
-            self.saver.build()
+            # saver = tf.train.import_meta_graph(session_path)
+            # saver.restore(sess, )
+            self.saver.restore(sess, session_path)
+            # self.saver.build()
 
     def train(self, mnist_loader, mnist_loader_test=None, n_epochs=10, batch_size=100, model_name="./my_mnist_model"):
         with tf.Session() as sess:
@@ -89,7 +90,8 @@ class CNN:
                 else:
                     print(epoch, "Train accuracy:", acc_train)
 
-                save_path = self.saver.save(sess, os.path.join("/home/tmoroz/dev/mnist_classification", model_name)) #tf_mnist_model.ckpt
+                save_path = self.saver.save(sess, model_name) #tf_mnist_model.ckpt
+                print("The model is saved in ", save_path)
 
     def predict(self, mnist_loader):
         with tf.Session() as sess:

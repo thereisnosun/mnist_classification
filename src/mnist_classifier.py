@@ -120,12 +120,12 @@ def build_cnn():
     batch_size = 100
 
     cnn_tf = cnn_network.CNN()
-    #cnn_tf.train(mnist_dataset, None, n_epoch, batch_size, "./data/tf_mnist_model.ckpt")
-    cnn_tf.restore("data/tf_mnist_model")
+    #cnn_tf.train(mnist_dataset, None, n_epoch, batch_size, "../data/tf_mnist_model.ckpt")
+    cnn_tf.restore("../data/tf_mnist_model.ckpt")
     predict_result = cnn_tf.predict(mnist_test_dataset)
-
-    X_test_data = load_dataset('test.csv') #TODO: fix this stupid workaround
-    create_prediction_file(X_test_data, pd.Series(predict_result))
+    #
+    # X_test_data = load_dataset('test.csv') #TODO: fix this stupid workaround
+    # create_prediction_file(X_test_data, pd.Series(predict_result))
 
 
 def main():
