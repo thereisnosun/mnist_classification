@@ -74,7 +74,7 @@ class CNN:
     def __exit__(self, exc_type, exc_value, traceback):
         self.sess.close()
 
-    def restore(self, session_path, mnist_loader=None):
+    def restore(self, session_path):
         self.saver.restore(self.sess, session_path)
 
     def train(self, mnist_loader, mnist_loader_test=None, n_epochs=10, batch_size=100, model_name="./my_mnist_model"):
@@ -94,11 +94,14 @@ class CNN:
             save_path = self.saver.save(self.sess, model_name) #tf_mnist_model.ckpt
             print("The model is saved in ", save_path)
 
-    def predict(self, mnist_loader):
-        x, y = mnist_loader.get_next_batch(100)
-        result = self.prediction.eval(feed_dict={self.X: x}, session=self.sess)
-        print (len(result), type(result))
-        print(result)
-        print("--------------------")
-        print(y)
-        return result
+    def predict(self, mnist_loader, batch_size=None):
+        if not batch_size:
+            x = mnist_loader.get_images()
+            return self.prediction.eval(feed_dict={self.X: x}, session=self.sess)
+        else:
+            x, _ = mnist_loader.get_next_batch(batch_size)
+            total_result = []
+            for iteration in range(mnist_loader.size() // batch_size):
+                batch_result = self.prediction.eval(feed_dict={self.X: x}, session=self.sess)
+                total_result.extend(batch_result.tolist())
+            return total_result
