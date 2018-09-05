@@ -1,6 +1,6 @@
 import tensorflow as tf
 import src.mnist_loader as mnist_loader
-from tensorflow.examples.tutorials.mnist import input_data
+from tensorflow.python import debug as tf_debug
 
 import os
 
@@ -47,7 +47,7 @@ class CNN:
 
         with tf.name_scope("output"):
             self.logits = tf.layers.dense(fc1, self.n_outputs, name="output")
-            Y_proba = tf.nn.softmax(self.logits, name="Y_proba")
+            self.Y_proba = tf.nn.softmax(self.logits, name="Y_proba")
 
         with tf.name_scope("train"):
             xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y)
@@ -64,39 +64,41 @@ class CNN:
             self.saver = tf.train.Saver()
 
         with tf.name_scope("predict"):
-            correct = tf.nn.in_top_k(self.logits, self.y, 1)
-            self.prediction = tf.argmax(self.logits, 1)
+            self.prediction = tf.argmax(self.Y_proba, 1)
 
+        self.sess = tf.Session()
 
-    def restore(self, session_path):
-        #tf.reset_default_graph()
-        with tf.Session() as sess:
-            # saver = tf.train.import_meta_graph(session_path)
-            # saver.restore(sess, )
-            self.saver.restore(sess, session_path)
-            # self.saver.build()
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.sess.close()
+
+    def restore(self, session_path, mnist_loader=None):
+        self.saver.restore(self.sess, session_path)
 
     def train(self, mnist_loader, mnist_loader_test=None, n_epochs=10, batch_size=100, model_name="./my_mnist_model"):
-        with tf.Session() as sess:
-            self.init.run()
-            for epoch in range(n_epochs):
-                for iteration in range(mnist_loader.size() // batch_size):
-                    X_batch, y_batch = mnist_loader.get_next_batch(batch_size)
-                    sess.run(self.training_op, feed_dict={self.X: X_batch, self.y: y_batch})
-                acc_train = self.accuracy.eval(feed_dict={self.X: X_batch, self.y: y_batch})
-                if mnist_loader_test:
-                    acc_test = self.accuracy.eval(feed_dict={self.X: mnist_loader_test.get_images(), self.y: mnist_loader_test.get_labels()})
-                    print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
-                else:
-                    print(epoch, "Train accuracy:", acc_train)
+        self.init.run(session=self.sess)
+        for epoch in range(n_epochs):
+            for iteration in range(mnist_loader.size() // batch_size):
+                X_batch, y_batch = mnist_loader.get_next_batch(batch_size)
+                self.sess.run(self.training_op, feed_dict={self.X: X_batch, self.y: y_batch})
+            acc_train = self.accuracy.eval(feed_dict={self.X: X_batch, self.y: y_batch}, session=self.sess)
+            if mnist_loader_test:
+                X_test_batch, y_test_batch = mnist_loader_test.get_next_batch(batch_size)
+                acc_test = self.accuracy.eval(feed_dict={self.X: X_test_batch, self.y: y_test_batch}, session=self.sess)
+                print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
+            else:
+                print(epoch, "Train accuracy:", acc_train)
 
-                save_path = self.saver.save(sess, model_name) #tf_mnist_model.ckpt
-                print("The model is saved in ", save_path)
+            save_path = self.saver.save(self.sess, model_name) #tf_mnist_model.ckpt
+            print("The model is saved in ", save_path)
 
     def predict(self, mnist_loader):
-        with tf.Session() as sess:
-            self.init.run()
-            #result = self.prediction.eval(feed_dict={self.X: mnist_loader.get_images()})
-            result = sess.run(self.prediction, feed_dict={self.X: mnist_loader.get_images()})
-            print (len(result), type(result))
-            return result
+        x, y = mnist_loader.get_next_batch(100)
+        result = self.prediction.eval(feed_dict={self.X: x}, session=self.sess)
+        print (len(result), type(result))
+        print(result)
+        print("--------------------")
+        print(y)
+        return result
