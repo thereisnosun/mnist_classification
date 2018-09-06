@@ -99,9 +99,9 @@ class CNN:
             x = mnist_loader.get_images()
             return self.prediction.eval(feed_dict={self.X: x}, session=self.sess)
         else:
-            x, _ = mnist_loader.get_next_batch(batch_size)
             total_result = []
             for iteration in range(mnist_loader.size() // batch_size):
+                x, _ = mnist_loader.get_next_batch(batch_size)
                 batch_result = self.prediction.eval(feed_dict={self.X: x}, session=self.sess)
                 total_result.extend(batch_result.tolist())
             return total_result
